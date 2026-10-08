@@ -1,0 +1,34 @@
+<div class="relative">
+  @let e = entree();
+  @if (image().apercuDisponible && e && !e.loading && !e.error) {
+    <button
+      type="button"
+      (click)="onClick()"
+      class="aspect-square w-full cursor-pointer overflow-hidden rounded-md border border-slate-200 bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+    >
+      <img [src]="e.objectUrl" [alt]="'Image ' + image().imageId" class="h-full w-full object-cover" />
+    </button>
+  } @else {
+    <div class="aspect-square overflow-hidden rounded-md border border-slate-200 bg-slate-50">
+      @if (!image().apercuDisponible) {
+        <div class="flex h-full items-center justify-center text-center text-xs text-slate-400">
+          Aperçu indisponible
+        </div>
+      } @else if (e?.error) {
+        <div class="flex h-full items-center justify-center text-center text-xs text-red-500">
+          Erreur de chargement
+        </div>
+      } @else {
+        <div class="flex h-full items-center justify-center text-xs text-slate-400">Chargement…</div>
+      }
+    </div>
+  }
+
+  @if (aUneDetection()) {
+    <span
+      class="pointer-events-none absolute right-1 top-1 h-3 w-3 rounded-full bg-red-500 ring-2 ring-white"
+      aria-label="Détection IA présente"
+      title="Détection IA présente"
+    ></span>
+  }
+</div>

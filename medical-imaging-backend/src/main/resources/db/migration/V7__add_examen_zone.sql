@@ -1,0 +1,1 @@
+ALTER TABLE examen ADD COLUMN zone VARCHAR(50);

@@ -1,0 +1,217 @@
+<div
+  class="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+  role="dialog"
+  aria-modal="true"
+  (click)="onFermer()"
+>
+  <button
+    type="button"
+    (click)="onArretPropagation($event); onFermer()"
+    class="absolute right-4 top-4 rounded-full bg-white/10 p-2 text-2xl leading-none text-white hover:bg-white/20"
+    aria-label="Fermer"
+  >
+    ✕
+  </button>
+
+  <div class="absolute left-4 top-4 text-sm text-white/80">
+    {{ position() }}
+  </div>
+
+  <button
+    type="button"
+    (click)="onArretPropagation($event); onPrecedent()"
+    [disabled]="indexPrecedentOuvrable() === null"
+    class="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-3 text-2xl leading-none text-white hover:bg-white/20 disabled:opacity-30 disabled:hover:bg-white/10"
+    aria-label="Image précédente"
+  >
+    ‹
+  </button>
+
+  <button
+    type="button"
+    (click)="onArretPropagation($event); onSuivant()"
+    [disabled]="indexSuivantOuvrable() === null"
+    class="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-3 text-2xl leading-none text-white hover:bg-white/20 disabled:opacity-30 disabled:hover:bg-white/10"
+    aria-label="Image suivante"
+  >
+    ›
+  </button>
+
+  <div
+    #conteneurImage
+    class="flex h-full max-h-[80vh] w-full max-w-[80vw] items-center justify-center overflow-hidden"
+    (click)="onArretPropagation($event)"
+    (wheel)="onWheel($event)"
+    (mousedown)="onPointerDown($event)"
+  >
+    @let e = entreeCourante();
+    @if (e && !e.loading && !e.error) {
+      <div
+        class="grid max-h-full max-w-full"
+        [style.transform]="transformStyle()"
+        [style.cursor]="niveauZoom() > 1 ? 'grab' : 'default'"
+      >
+        <img
+          #imgCourante
+          (load)="onImageLoad(imgCourante)"
+          [src]="e.objectUrl"
+          [alt]="'Image ' + imageCourante().imageId"
+          class="col-start-1 row-start-1 max-h-full max-w-full select-none object-contain"
+        />
+
+        @if (boxes().length > 0 && naturalSize(); as taille) {
+          <svg
+            class="pointer-events-none col-start-1 row-start-1 h-full w-full"
+            [attr.viewBox]="'0 0 ' + taille.width + ' ' + taille.height"
+            preserveAspectRatio="none"
+          >
+            @for (box of boxes(); track box.id) {
+              <rect
+                [attr.x]="box.bbox!.x"
+                [attr.y]="box.bbox!.y"
+                [attr.width]="box.bbox!.largeur"
+                [attr.height]="box.bbox!.hauteur"
+                fill="none"
+                [attr.stroke]="couleurBox(box.statut)"
+                stroke-width="3"
+              />
+              <text
+                [attr.x]="box.bbox!.x"
+                [attr.y]="box.bbox!.y > 20 ? box.bbox!.y - 6 : box.bbox!.y + 16"
+                [attr.fill]="couleurBox(box.statut)"
+                font-size="16"
+                font-weight="600"
+                [class.line-through]="box.statut === 'REJETEE'"
+              >{{ box.anomalie }} — {{ pourcentage(box.confiance) }}%</text>
+            }
+          </svg>
+        }
+
+        @for (masque of masques(); track masque.id) {
+          @let url = masqueUrl(masque.id);
+          @if (url) {
+            <div
+              class="pointer-events-none col-start-1 row-start-1 opacity-40"
+              [class]="classeMasque(masque.statut)"
+              [ngStyle]="{
+                'mask-image': 'url(' + url + ')',
+                'mask-size': '100% 100%',
+                'mask-mode': 'luminance',
+                '-webkit-mask-image': 'url(' + url + ')',
+                '-webkit-mask-size': '100% 100%'
+              }"
+            ></div>
+          }
+        }
+      </div>
+
+      @if (boxes().length > 0) {
+        <div
+          class="absolute right-4 top-10 max-w-xs space-y-2 text-xs text-white/80"
+          (click)="onArretPropagation($event)"
+        >
+          @for (box of boxes(); track box.id) {
+            <div class="rounded-md bg-black/40 p-2">
+              <p [class.line-through]="box.statut === 'REJETEE'">
+                {{ box.anomalie }} — {{ pourcentage(box.confiance) }}%
+              </p>
+              @if (box.validateurEmail) {
+                <p class="text-white/60">validé par {{ box.validateurEmail }}</p>
+              }
+              @if (peutValider()) {
+                <div class="mt-1 flex gap-2">
+                  <button
+                    type="button"
+                    (click)="onAccepter(box.id)"
+                    class="rounded bg-green-600 px-2 py-0.5 font-medium text-white hover:bg-green-700"
+                  >
+                    Accepter
+                  </button>
+                  <button
+                    type="button"
+                    (click)="onRejeter(box.id)"
+                    class="rounded bg-red-600 px-2 py-0.5 font-medium text-white hover:bg-red-700"
+                  >
+                    Rejeter
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      @if (masques().length > 0) {
+        <div
+          class="absolute left-4 top-10 max-w-xs space-y-2 text-xs text-white/80"
+          (click)="onArretPropagation($event)"
+        >
+          @for (masque of masques(); track masque.id) {
+            <div class="rounded-md bg-black/40 p-2">
+              <p [class.line-through]="masque.statut === 'REJETEE'">
+                {{ masque.anomalie }} — {{ pourcentage(masque.confiance) }}%
+              </p>
+              @if (masque.validateurEmail) {
+                <p class="text-white/60">validé par {{ masque.validateurEmail }}</p>
+              }
+              @if (peutValider()) {
+                <div class="mt-1 flex gap-2">
+                  <button
+                    type="button"
+                    (click)="onAccepter(masque.id)"
+                    class="rounded bg-green-600 px-2 py-0.5 font-medium text-white hover:bg-green-700"
+                  >
+                    Accepter
+                  </button>
+                  <button
+                    type="button"
+                    (click)="onRejeter(masque.id)"
+                    class="rounded bg-red-600 px-2 py-0.5 font-medium text-white hover:bg-red-700"
+                  >
+                    Rejeter
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    } @else if (e?.error) {
+      <p class="text-sm text-red-400">Erreur de chargement</p>
+    } @else {
+      <p class="text-sm text-white/60">Chargement…</p>
+    }
+  </div>
+
+  <div
+    class="absolute bottom-4 flex items-center gap-3 rounded-md bg-white/10 px-4 py-2"
+    (click)="onArretPropagation($event)"
+  >
+    <button
+      type="button"
+      (click)="onZoomOut()"
+      [disabled]="niveauZoom() <= 1"
+      class="rounded-md px-3 py-1 text-lg text-white hover:bg-white/20 disabled:opacity-30"
+      aria-label="Dézoomer"
+    >
+      −
+    </button>
+    <span class="w-12 text-center text-sm text-white">{{ zoomPourcentage() }}%</span>
+    <button
+      type="button"
+      (click)="onZoomIn()"
+      [disabled]="niveauZoom() >= 5"
+      class="rounded-md px-3 py-1 text-lg text-white hover:bg-white/20 disabled:opacity-30"
+      aria-label="Zoomer"
+    >
+      +
+    </button>
+    <button
+      type="button"
+      (click)="onReset()"
+      class="rounded-md px-3 py-1 text-sm text-white hover:bg-white/20"
+    >
+      Réinitialiser
+    </button>
+  </div>
+</div>

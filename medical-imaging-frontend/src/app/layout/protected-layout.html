@@ -1,0 +1,14 @@
+<div class="min-h-screen bg-slate-50">
+  <header class="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-3">
+    <span class="text-sm font-semibold text-slate-900">Medical Imaging Platform</span>
+    <button
+      type="button"
+      (click)="onLogout()"
+      class="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+    >
+      Déconnexion
+    </button>
+  </header>
+
+  <router-outlet />
+</div>

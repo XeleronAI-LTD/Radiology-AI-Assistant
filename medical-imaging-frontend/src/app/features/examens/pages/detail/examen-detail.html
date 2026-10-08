@@ -1,0 +1,120 @@
+<div class="mx-auto max-w-5xl px-6 py-8">
+  <button
+    type="button"
+    (click)="onRetourListe()"
+    class="mb-6 text-sm font-medium text-blue-600 hover:text-blue-700"
+  >
+    ← Retour à la liste
+  </button>
+
+  @if (loading()) {
+    <p class="py-8 text-center text-sm text-slate-500">Chargement…</p>
+  }
+
+  @if (!loading() && error() === 'not-found') {
+    <p class="py-8 text-center text-sm text-slate-500">Examen introuvable.</p>
+  }
+
+  @if (!loading() && error() === 'generic') {
+    <div class="flex items-center justify-between rounded-md border border-red-200 bg-red-50 px-4 py-3">
+      <p class="text-sm text-red-700">Impossible de charger l'examen, réessayez plus tard.</p>
+      <button
+        type="button"
+        (click)="onRetry()"
+        class="rounded-md border border-red-300 px-3 py-1.5 text-sm font-medium text-red-700 transition-colors hover:bg-red-100"
+      >
+        Réessayer
+      </button>
+    </div>
+  }
+
+  @if (!loading() && !error() && examen(); as ex) {
+    <div class="mb-6 grid gap-4 sm:grid-cols-2">
+      <div class="rounded-lg border border-slate-200 bg-white p-4">
+        <h2 class="mb-2 text-sm font-semibold text-slate-900">Patient</h2>
+        <dl class="space-y-1 text-sm text-slate-700">
+          <div><dt class="inline font-medium">MRN :</dt> <dd class="inline">{{ ex.patient.mrn }}</dd></div>
+          <div><dt class="inline font-medium">Nom :</dt> <dd class="inline">{{ ex.patient.nom }}</dd></div>
+          <div>
+            <dt class="inline font-medium">Date de naissance :</dt>
+            <dd class="inline">{{ ex.patient.dateNaissance | date: 'dd/MM/yyyy' }}</dd>
+          </div>
+          <div><dt class="inline font-medium">Sexe :</dt> <dd class="inline">{{ ex.patient.sexe }}</dd></div>
+        </dl>
+      </div>
+
+      <div class="rounded-lg border border-slate-200 bg-white p-4">
+        <h2 class="mb-2 text-sm font-semibold text-slate-900">Examen</h2>
+        <dl class="space-y-1 text-sm text-slate-700">
+          <div><dt class="inline font-medium">Type :</dt> <dd class="inline">{{ ex.type }}</dd></div>
+          <div>
+            <dt class="inline font-medium">Date :</dt>
+            <dd class="inline">{{ ex.dateExamen | date: 'dd/MM/yyyy' }}</dd>
+          </div>
+          <div><dt class="inline font-medium">Modalité :</dt> <dd class="inline">{{ ex.modalite }}</dd></div>
+          <div><dt class="inline font-medium">Zone :</dt> <dd class="inline">{{ ex.zone }}</dd></div>
+          <div><dt class="inline font-medium">Créé par :</dt> <dd class="inline">{{ ex.creePar }}</dd></div>
+        </dl>
+      </div>
+    </div>
+
+    <div class="mb-6 flex items-center justify-between rounded-lg border border-slate-200 bg-white p-4">
+      <div>
+        <h2 class="text-sm font-semibold text-slate-900">Analyse IA</h2>
+        @if (analyseEnCours()) {
+          <p class="mt-1 text-sm text-slate-500">Analyse en cours…</p>
+        } @else if (statutAnalyse() === 'TERMINEE') {
+          <p class="mt-1 text-sm text-green-700">Analyse terminée.</p>
+        } @else if (statutAnalyse() === 'ECHOUEE') {
+          <p class="mt-1 text-sm text-red-700">Échec de l'analyse{{ analyseMessage() ? ' : ' + analyseMessage() : '' }}</p>
+        } @else {
+          <p class="mt-1 text-sm text-slate-500">Aucune analyse en cours pour cet examen.</p>
+        }
+        @if (erreurAnalyse()) {
+          <p class="mt-1 text-sm text-red-700">{{ erreurAnalyse() }}</p>
+        }
+      </div>
+
+      @if (peutAnalyser()) {
+        <button
+          type="button"
+          (click)="onLancerAnalyse()"
+          [disabled]="analyseEnCours() || analyseDejaTerminee()"
+          [title]="analyseDejaTerminee() ? 'Analyse déjà effectuée pour cet examen' : null"
+          class="rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Lancer l'analyse IA
+        </button>
+      }
+    </div>
+
+    <h2 class="mb-3 text-sm font-semibold text-slate-900">Images</h2>
+
+    @if (ex.images.length === 0) {
+      <p class="text-sm text-slate-500">Aucune image pour cet examen.</p>
+    } @else {
+      <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+        @for (image of ex.images; track image.imageId; let i = $index) {
+          <app-examen-image-apercu
+            [examenId]="ex.examenId"
+            [image]="image"
+            [detections]="detections()"
+            (ouvrir)="onOuvrirImage(i)"
+          />
+        }
+      </div>
+    }
+
+    @if (imageOuverteIndex() !== null) {
+      <app-examen-image-viewer
+        [examenId]="ex.examenId"
+        [images]="ex.images"
+        [indexInitial]="imageOuverteIndex()!"
+        [detections]="detections()"
+        [peutValider]="peutValider()"
+        (fermer)="onFermerViewer()"
+        (validerDetection)="onValiderDetection($event)"
+      />
+    }
+  }
+</div>

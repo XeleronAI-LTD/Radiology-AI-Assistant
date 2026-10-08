@@ -1,0 +1,3 @@
+ALTER TABLE examen ADD COLUMN statut_analyse VARCHAR(20) NOT NULL DEFAULT 'EN_ATTENTE';
+ALTER TABLE examen ADD COLUMN analyse_message VARCHAR(500);
+ALTER TABLE examen ADD COLUMN analyse_finie_le TIMESTAMP;

@@ -1,0 +1,145 @@
+<div class="mx-auto max-w-2xl px-6 py-8">
+  <h1 class="mb-6 text-xl font-semibold text-slate-900">Nouvel examen</h1>
+
+  <div class="mb-6 flex gap-2">
+    <button
+      type="button"
+      (click)="onChangerMode('STANDARD')"
+      [class.bg-blue-600]="mode() === 'STANDARD'"
+      [class.text-white]="mode() === 'STANDARD'"
+      class="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700"
+    >
+      Standard (PNG/JPEG)
+    </button>
+    <button
+      type="button"
+      (click)="onChangerMode('DICOM')"
+      [class.bg-blue-600]="mode() === 'DICOM'"
+      [class.text-white]="mode() === 'DICOM'"
+      class="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700"
+    >
+      DICOM
+    </button>
+  </div>
+
+  @if (resultat(); as r) {
+    <div class="mb-6 rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+      Examen créé ({{ r.nombreImages }} image(s)).
+      <a [routerLink]="['/examens', r.examenId]" class="font-medium underline">Voir l'examen</a>
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  <form (ngSubmit)="onSubmit()" [formGroup]="form" class="space-y-4">
+    <div>
+      <label class="mb-1 block text-sm font-medium text-slate-700">Fichiers</label>
+
+      @if (mode() === 'STANDARD') {
+        <label
+          for="fichiers-standard"
+          class="flex cursor-pointer items-center justify-center gap-2 rounded-md border-2 border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-sm font-medium text-blue-700 transition-colors hover:border-blue-400 hover:bg-blue-50"
+          [class.pointer-events-none]="loading()"
+          [class.opacity-50]="loading()"
+        >
+          📁 Choisir des images (PNG/JPEG)
+          <input
+            id="fichiers-standard"
+            #fileInputStandard
+            type="file"
+            multiple
+            accept=".png,.jpg,.jpeg,image/png,image/jpeg"
+            (change)="onFichiersSelectionnes($event)"
+            [disabled]="loading()"
+            class="sr-only"
+          />
+        </label>
+      } @else {
+        <label
+          for="fichiers-dicom"
+          class="flex cursor-pointer items-center justify-center gap-2 rounded-md border-2 border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-sm font-medium text-blue-700 transition-colors hover:border-blue-400 hover:bg-blue-50"
+          [class.pointer-events-none]="loading()"
+          [class.opacity-50]="loading()"
+        >
+          📁 Choisir le dossier DICOM
+          <input
+            id="fichiers-dicom"
+            #fileInputDicom
+            type="file"
+            multiple
+            webkitdirectory
+            (change)="onFichiersSelectionnes($event)"
+            [disabled]="loading()"
+            class="sr-only"
+          />
+        </label>
+        <p class="mt-1 text-xs text-slate-500">
+          Sélectionnez le dossier contenant les fichiers .dcm de l'examen — les fichiers non-DICOM du
+          dossier sont ignorés automatiquement.
+        </p>
+      }
+
+      @if (fichiers().length > 0) {
+        <p class="mt-1 text-xs text-slate-500">
+          @if (mode() === 'DICOM') {
+            {{ fichiers().length }} fichier(s) DICOM sélectionné(s)
+          } @else {
+            {{ fichiers().length }} fichier(s) sélectionné(s)
+          }
+        </p>
+      }
+    </div>
+
+    @if (mode() === 'STANDARD') {
+      <div class="grid grid-cols-2 gap-4">
+        <input
+          formControlName="mrn"
+          placeholder="MRN *"
+          class="rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        />
+        <input
+          formControlName="nom"
+          placeholder="Nom *"
+          class="rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        />
+        <input
+          formControlName="dateNaissance"
+          type="date"
+          class="rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        />
+        <input
+          formControlName="sexe"
+          placeholder="Sexe"
+          class="rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        />
+        <input
+          formControlName="type"
+          placeholder="Type d'examen"
+          class="rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        />
+        <input
+          formControlName="dateExamen"
+          type="date"
+          class="rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        />
+        <input
+          formControlName="modalite"
+          placeholder="Modalité"
+          class="rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        />
+      </div>
+    }
+
+    <button
+      type="submit"
+      [disabled]="!peutSoumettre()"
+      class="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      {{ loading() ? 'Envoi…' : 'Uploader' }}
+    </button>
+  </form>
+</div>

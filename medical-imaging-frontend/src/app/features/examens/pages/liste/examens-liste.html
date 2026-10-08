@@ -1,0 +1,107 @@
+<div class="mx-auto max-w-5xl px-6 py-8">
+  <div class="mb-6 flex items-center justify-between">
+    <h1 class="text-xl font-semibold text-slate-900">Examens</h1>
+    @if (peutUploader()) {
+      <button
+        type="button"
+        (click)="onNouvelExamen()"
+        class="rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+      >
+        + Nouvel examen
+      </button>
+    }
+  </div>
+
+  <form (submit)="$event.preventDefault(); onSearch(mrnInput.value)" class="mb-6 flex gap-2">
+    <input
+      #mrnInput
+      type="text"
+      placeholder="Rechercher par MRN exact"
+      class="w-64 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+    />
+    <button
+      type="submit"
+      class="rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+    >
+      Rechercher
+    </button>
+  </form>
+
+  @if (error()) {
+    <div class="mb-6 flex items-center justify-between rounded-md border border-red-200 bg-red-50 px-4 py-3">
+      <p class="text-sm text-red-700">{{ error() }}</p>
+      <button
+        type="button"
+        (click)="onRetry()"
+        class="rounded-md border border-red-300 px-3 py-1.5 text-sm font-medium text-red-700 transition-colors hover:bg-red-100"
+      >
+        Réessayer
+      </button>
+    </div>
+  }
+
+  @if (loading()) {
+    <p class="py-8 text-center text-sm text-slate-500">Chargement…</p>
+  }
+
+  @if (!loading() && !error() && examens().length === 0) {
+    <p class="py-8 text-center text-sm text-slate-500">Aucun examen trouvé.</p>
+  }
+
+  @if (!loading() && !error() && examens().length > 0) {
+    <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+      <table class="w-full text-left text-sm">
+        <thead class="border-b border-slate-200 bg-slate-50 text-slate-600">
+          <tr>
+            <th class="px-4 py-2 font-medium">Patient</th>
+            <th class="px-4 py-2 font-medium">Type</th>
+            <th class="px-4 py-2 font-medium">Date d'examen</th>
+            <th class="px-4 py-2 font-medium">Modalité</th>
+            <th class="px-4 py-2 font-medium">Zone</th>
+            <th class="px-4 py-2 font-medium">Images</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (examen of examens(); track examen.examenId) {
+            <tr
+              (click)="onRowClick(examen.examenId)"
+              class="cursor-pointer border-b border-slate-100 last:border-0 hover:bg-slate-50"
+            >
+              <td class="px-4 py-2">
+                <span class="font-medium text-slate-900">{{ examen.mrn }}</span>
+                <span class="text-slate-500"> — {{ examen.patientNom }}</span>
+              </td>
+              <td class="px-4 py-2">{{ examen.type }}</td>
+              <td class="px-4 py-2">{{ examen.dateExamen | date: 'dd/MM/yyyy' }}</td>
+              <td class="px-4 py-2">{{ examen.modalite }}</td>
+              <td class="px-4 py-2">{{ examen.zone }}</td>
+              <td class="px-4 py-2">{{ examen.nombreImages }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mt-4 flex items-center justify-between">
+      <button
+        type="button"
+        [disabled]="page() === 0 || loading()"
+        (click)="onPrevious()"
+        class="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        Précédent
+      </button>
+
+      <span class="text-sm text-slate-600">Page {{ page() + 1 }} sur {{ totalPages() }}</span>
+
+      <button
+        type="button"
+        [disabled]="page() + 1 >= totalPages() || loading()"
+        (click)="onNext()"
+        class="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        Suivant
+      </button>
+    </div>
+  }
+</div>
